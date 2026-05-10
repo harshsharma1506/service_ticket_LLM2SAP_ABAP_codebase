@@ -1,5 +1,4 @@
 # service_ticket_LLM2SAP_ABAP_codebase
-# service_Ticket_LLM2SAP
 # 🤖 LLM + SAP RAP Integration Demo
 
 A beginner-friendly demonstration project showing how **Large Language Models (LLMs)** can be integrated into enterprise applications using:
