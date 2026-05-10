@@ -13,8 +13,7 @@ authorization master ( instance )
 
   determination SetInitialValues on modify { create; }
 
-  field ( readonly ) incident_id,
-                     created_at,
-                     created_by;
-
+  field ( readonly, numbering : managed ) incident_id;
+  field ( readonly ) created_at,
+  created_by;
 }

@@ -15,74 +15,50 @@ CLASS lhc_zi_ai_incident IMPLEMENTATION.
     " For unrestricted access, leave the result table empty
   ENDMETHOD.
 
- METHOD setinitialvalues.
+  METHOD setinitialvalues.
 
-  " Read entities being created
-  READ ENTITIES OF zi_ai_incident IN LOCAL MODE
-    ENTITY zi_ai_incident
-      FIELDS (
-        incident_id
-        created_at
-        created_by
-        status
-      )
+
+    READ ENTITIES OF zi_ai_incident IN LOCAL MODE
+      ENTITY zi_ai_incident
+      FIELDS ( created_at created_by status )
       WITH CORRESPONDING #( keys )
-    RESULT DATA(lt_incidents).
+      RESULT DATA(lt_incidents).
 
-  " Keep only records without UUID
-  DELETE lt_incidents
-    WHERE incident_id IS NOT INITIAL.
+    LOOP AT lt_incidents ASSIGNING FIELD-SYMBOL(<ls>).
 
-  IF lt_incidents IS INITIAL.
-    RETURN.
-  ENDIF.
+      "Defaults
+      DATA(lv_now) = utclong_current( ).
 
-  " Populate system-managed fields
-  LOOP AT lt_incidents ASSIGNING FIELD-SYMBOL(<fs_incident>).
+      IF <ls>-created_at IS INITIAL.
+        GET TIME STAMP FIELD <ls>-created_at.
+      ENDIF.
 
-    TRY.
+      IF <ls>-created_by IS INITIAL.
+        <ls>-created_by = cl_abap_context_info=>get_user_technical_name( ).
+      ENDIF.
 
-        <fs_incident>-incident_id =
-          cl_system_uuid=>create_uuid_x16_static( ).
+      "⚠️ FORCE status ALWAYS
+      <ls>-status = 'PROCESSED'.
 
-      CATCH cx_uuid_error.
+    ENDLOOP.
 
-        CONTINUE.
+    "IMPORTANT: write back using control structure
+    MODIFY ENTITIES OF zi_ai_incident IN LOCAL MODE
+      ENTITY zi_ai_incident
+        UPDATE FIELDS ( created_at created_by status )
+        WITH VALUE #(
+          FOR ls IN lt_incidents (
+            %tky = ls-%tky
+            created_at = ls-created_at
+            created_by = ls-created_by
+            status = ls-status
 
-    ENDTRY.
+            %control-created_at = if_abap_behv=>mk-on
+            %control-created_by = if_abap_behv=>mk-on
+            %control-status     = if_abap_behv=>mk-on
+          )
+        ).
 
-    GET TIME STAMP FIELD <fs_incident>-created_at.
-
-    <fs_incident>-created_by =
-      cl_abap_context_info=>get_user_technical_name( ).
-
-    <fs_incident>-status = 'NEW'.
-
-  ENDLOOP.
-
-  " Update transactional buffer
-  MODIFY ENTITIES OF zi_ai_incident IN LOCAL MODE
-    ENTITY zi_ai_incident
-      UPDATE FIELDS (
-        incident_id
-        created_at
-        created_by
-        status
-      )
-      WITH VALUE #(
-        FOR ls_incident IN lt_incidents (
-          %tky        = ls_incident-%tky
-          incident_id = ls_incident-incident_id
-          created_at  = ls_incident-created_at
-          created_by  = ls_incident-created_by
-          status      = ls_incident-status
-        )
-      )
-    REPORTED DATA(lt_reported).
-
-  reported =
-    CORRESPONDING #( BASE ( reported ) lt_reported ).
-
-ENDMETHOD.
+  ENDMETHOD.
 
 ENDCLASS.
