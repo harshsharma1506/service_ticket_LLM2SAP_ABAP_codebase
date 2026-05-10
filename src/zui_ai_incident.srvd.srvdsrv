@@ -1,0 +1,4 @@
+@EndUserText.label: 'AI Incident Service'
+define service ZUI_AI_INCIDENT {
+  expose ZI_AI_INCIDENT;
+}

@@ -1,0 +1,20 @@
+managed implementation in class zbp_i_ai_incident unique;
+
+define behavior for ZI_AI_INCIDENT
+persistent table zai_incident
+lock master
+authorization master ( instance )
+
+{
+
+  create;
+  update;
+  delete;
+
+  determination SetInitialValues on modify { create; }
+
+  field ( readonly ) incident_id,
+                     created_at,
+                     created_by;
+
+}
